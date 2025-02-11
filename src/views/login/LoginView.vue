@@ -1,7 +1,5 @@
 <template>
-	<button v-if="!isAuthenticated" @click="submitLogin()">
-		Login Page Placeholder Here
-	</button>
+	<button v-if="!isAuthenticated" @click="submitLogin()">LOGIN</button>
 </template>
 <script src="./LoginView.ts" />
 
