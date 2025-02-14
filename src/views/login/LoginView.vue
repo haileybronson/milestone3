@@ -20,6 +20,9 @@
 							hide-details="auto"
 							@keyup.enter="submitLogin()"
 						/>
+						<v-alert v-if="errorMsg" :type="alertType" class="mt-3">
+							{{ errorMsg }}
+						</v-alert>
 					</div>
 				</v-form>
 
