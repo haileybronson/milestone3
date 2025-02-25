@@ -2,6 +2,7 @@
   "name": "byu-590r-frontend-vue",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "run-p build-only",
@@ -29,6 +30,7 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.7.1",
     "vite": "^4.0.0",
+    "vite-plugin-vue-devtools": "^7.7.1",
     "vite-plugin-vuetify": "^1.0.2",
     "vuetify": "^3.1.2"
   }
