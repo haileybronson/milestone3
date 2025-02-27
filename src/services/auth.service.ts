@@ -1,6 +1,5 @@
 import axios from 'axios';
 import API_URL from "./env"
-import { constants } from 'fs';
 
 class AuthService {
    login(user) {
