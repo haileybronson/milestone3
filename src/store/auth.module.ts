@@ -26,6 +26,7 @@ export const auth = {
            commit('logout');
        },
        register({ commit }, user) {
+        console.log(user)
            return authService.register(user).then(
                response => {
                    commit('registerSuccess');
@@ -74,3 +75,4 @@ export const auth = {
        }
    },
 };
+

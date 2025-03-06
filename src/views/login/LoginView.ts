@@ -115,7 +115,7 @@ export default {
 			}
 
 			this.registerFormIsLoading = true
-			this.$store.dispatch("auth/register").then(
+			this.$store.dispatch("auth/register", register).then(
 				() => {
 					alert("Success!")
 					this.registerFormIsLoading = false
