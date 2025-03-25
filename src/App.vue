@@ -56,28 +56,27 @@ export default {
 			isAuthenticated() {
 				return (
 					this.auth.status.loggedIn &&
-					this.authUser.token !== undefined
+					this.authUser &&
+					this.authUser.token
 				)
 			},
 			title() {
-				return "Welcome " + this.authUser.name + "!"
+				return (
+					"Welcome " + (this.authUser ? this.authUser.name : "") + "!"
+				)
 			},
 			avatarURL() {
-				return this.auth.user.avatar
+				return this.auth.user ? this.auth.user.avatar : null
 			},
 			profilePictureChangeLabel() {
 				return "Profile picture change"
 			}
 		})
 	},
-	updated() {
-		if (this.isAuthenticated) {
-			this.$router.push({ name: "home" })
-		}
-	},
 	created() {
-		if (this.authUser) {
-			console.log("here")
+		const user = JSON.parse(localStorage.getItem("user"))
+		if (user && user.token) {
+			console.log("User found in localStorage, getting current user")
 			this.getCurrentUser()
 		}
 	},
@@ -150,8 +149,9 @@ export default {
 	<v-app :theme="theme">
 		<v-app-bar v-if="isAuthenticated">
 			<v-spacer></v-spacer>
-			<v-btn to="/home" default> Home </v-btn>
-			<v-btn to="about" default> About </v-btn>
+			<v-btn to="/" default> Home </v-btn>
+			<v-btn to="/recipes" default> Recipes </v-btn>
+			<v-btn to="/about" default> About </v-btn>
 
 			<v-menu min-width="200px" rounded>
 				<template v-slot:activator="{ props }">
@@ -249,78 +249,3 @@ export default {
 		<v-dialog v-model="showEmailNotVerifiedDialog" persistent></v-dialog>
 	</v-app>
 </template>
-<!-- <template>
-	<v-app :theme="theme">
-		<v-app-bar
-			v-if="isAuthenticated"
-		>
-			<v-spacer></v-spacer>
-			<v-btn to="home" default>Home</v-btn>
-			<v-btn to="about">About</v-btn>
-			<v-btn
-				:prepend-icon="
-					theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'
-				"
-				@click="changeTheme"
-				>Toggle Theme
-			</v-btn>
-			<--- Profile Avatar Dropdown Menu -->
-<!-- <v-menu offset-y>
-				<template v-slot:activator="{ props }">
-					<v-btn v-bind="props" icon>
-						<v-avatar size="40">
-							<-- Show user silhouette if avatar is null -->
-<!-- <img v-if="avatarURL" :src="avatarURL" alt="Profile Picture" />
-							<v-icon v-else>mdi-account-circle</v-icon>
-						</v-avatar>
-					</v-btn>
-				</template>
-				<v-list>
-					<v-list-item>
-						<v-list-item-title>{{ profile.name }}</v-list-item-title>
-					</v-list-item>
-					<v-divider></v-divider>
-					<v-list-item>
-						<v-btn @click="onAvatarChange">Change Profile Picture</v-btn>
-					</v-list-item>
-					<v-list-item>
-						<v-btn color="error" @click="removeAvatar">Remove Profile Picture</v-btn>
-					</v-list-item>
-					<v-divider></v-divider>
-					<v-list-item>
-						<v-btn color="primary" @click="logout">Logout</v-btn>
-					</v-list-item>
-				</v-list>
-			</v-menu>
-		</v-app-bar> -->
-
-<!-- <v-main>
-			<v-container>
-				<div v-if="isAuthenticated">
-					<RouterView />
-				</div>
-				<LoginView
-					v-else
-					:is-authenticated="isAuthenticated"
-					@authenticate="checkAuth($event)"
-				/>
-			</v-container>
-		</v-main> -->
-
-<!-- Profile Picture Upload Dialog -->
-<!-- <v-dialog v-model="profileDialog" persistent max-width="400px">
-			<v-card>
-				<v-card-title class="headline">Upload Profile Picture</v-card-title>
-				<v-card-text>
-					<v-file-input label="Select an image" accept="image/*" @change="onAvatarChange"></v-file-input>
-					<v-progress-circular v-if="profileIsUploading" indeterminate color="primary"></v-progress-circular>
-				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="red" @click="closeProfileDialog">Cancel</v-btn>
-					<v-btn color="green" @click="closeProfileDialog">Done</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
-	</v-app>
-</template> -->
