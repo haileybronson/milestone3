@@ -72,6 +72,85 @@ class RecipeService {
 				throw error
 			})
 	}
+
+	updateRecipe(id: number, recipe: any) {
+		const formData = new FormData()
+		formData.append("name", recipe.name)
+		formData.append("description", recipe.description)
+		if (recipe.image) {
+			formData.append("image", recipe.image)
+		}
+		formData.append("_method", "PUT") // Laravel requires this for PUT requests with FormData
+
+		return axios
+			.post(API_URL + `recipes/${id}`, formData, {
+				headers: {
+					...authHeader(),
+					"Content-Type": "multipart/form-data"
+				}
+			})
+			.then((response) => {
+				console.log("Update Recipe Response:", response)
+				return response.data.data
+			})
+			.catch((error) => {
+				console.error("Update Recipe Error:", error)
+				throw error
+			})
+	}
+
+	deleteRecipe(id: number) {
+		return axios
+			.delete(API_URL + `recipes/${id}`, {
+				headers: authHeader()
+			})
+			.then((response) => {
+				console.log("Delete Recipe Response:", response)
+				return response.data
+			})
+			.catch((error) => {
+				console.error("Delete Recipe Error:", error)
+				throw error
+			})
+	}
+
+	checkoutRecipe(id: number) {
+		return axios
+			.post(
+				API_URL + `recipes/${id}/checkout`,
+				{},
+				{
+					headers: authHeader()
+				}
+			)
+			.then((response) => {
+				console.log("Checkout Recipe Response:", response)
+				return response.data.data
+			})
+			.catch((error) => {
+				console.error("Checkout Recipe Error:", error)
+				throw error
+			})
+	}
+
+	returnRecipe(id: number) {
+		return axios
+			.post(
+				API_URL + `recipes/${id}/return`,
+				{},
+				{
+					headers: authHeader()
+				}
+			)
+			.then((response) => {
+				console.log("Return Recipe Response:", response)
+				return response.data.data
+			})
+			.catch((error) => {
+				console.error("Return Recipe Error:", error)
+				throw error
+			})
+	}
 }
 
 export default new RecipeService()
