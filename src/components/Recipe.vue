@@ -15,13 +15,25 @@
 				sm="6"
 				md="4"
 			>
-				<v-card class="mx-auto" max-width="400">
+				<v-card
+					class="mx-auto"
+					max-width="400"
+					:class="{
+						unavailable:
+							recipe.checked_qty >= recipe.inventory_total_qty
+					}"
+				>
 					<v-img
 						:src="getImageUrl(recipe.recipe_cover_picture)"
 						height="200"
 						cover
 						class="align-end"
 						@error="(e) => handleImageError(e, recipe)"
+						:style="
+							recipe.checked_qty >= recipe.inventory_total_qty
+								? 'opacity: 0.5;'
+								: ''
+						"
 					>
 						<v-card-title class="text-white bg-black bg-opacity-50">
 							{{ recipe.name }}
@@ -31,13 +43,47 @@
 						<div class="text-subtitle-1 py-2">
 							{{ recipe.description }}
 						</div>
+						<div class="text-caption">
+							Status:
+							{{
+								recipe.checked_qty >= recipe.inventory_total_qty
+									? "Currently in use"
+									: "Available"
+							}}
+							<br />
+							Inventory:
+							{{ recipe.inventory_total_qty }} available
+						</div>
 					</v-card-text>
 					<v-card-actions>
+						<v-btn
+							:disabled="
+								recipe.checked_qty >= recipe.inventory_total_qty
+							"
+							color="primary"
+							@click="checkoutRecipe(recipe)"
+							v-if="
+								recipe.checked_qty < recipe.inventory_total_qty
+							"
+						>
+							Save for Cooking
+						</v-btn>
+						<v-btn
+							color="success"
+							@click="returnRecipe(recipe)"
+							v-if="recipe.checked_qty > 0"
+						>
+							Mark as Done
+						</v-btn>
 						<v-spacer></v-spacer>
 						<v-btn icon @click="editRecipe(recipe)">
 							<v-icon>mdi-pencil</v-icon>
 						</v-btn>
-						<v-btn icon @click="confirmDelete(recipe)">
+						<v-btn
+							icon
+							@click="confirmDelete(recipe)"
+							color="error"
+						>
 							<v-icon>mdi-delete</v-icon>
 						</v-btn>
 					</v-card-actions>
@@ -306,13 +352,23 @@ const confirmDelete = (recipe: any) => {
 }
 
 const deleteRecipe = async () => {
+	if (!recipeToDelete.value) return
+
 	try {
+		console.log("Deleting recipe:", recipeToDelete.value.name)
 		await RecipeService.deleteRecipe(recipeToDelete.value.id)
-		await loadRecipes()
+		console.log("Recipe deleted successfully")
+		await loadRecipes() // Refresh the list
 		showDeleteDialog.value = false
 		recipeToDelete.value = null
 	} catch (error) {
 		console.error("Error deleting recipe:", error)
+		if (error.response) {
+			console.error("Error response data:", error.response.data)
+			alert("Failed to delete recipe: " + error.response.data.message)
+		} else {
+			alert("Failed to delete recipe. Please try again.")
+		}
 	}
 }
 
@@ -395,6 +451,30 @@ const submitRecipe = async () => {
 	}
 }
 
+const checkoutRecipe = async (recipe: any) => {
+	try {
+		console.log("Checking out recipe:", recipe.name)
+		const response = await RecipeService.checkoutRecipe(recipe.id)
+		console.log("Checkout response:", response)
+		await loadRecipes() // Refresh the list to show updated status
+	} catch (error) {
+		console.error("Error checking out recipe:", error)
+		alert("Failed to save recipe for cooking")
+	}
+}
+
+const returnRecipe = async (recipe: any) => {
+	try {
+		console.log("Returning recipe:", recipe.name)
+		const response = await RecipeService.returnRecipe(recipe.id)
+		console.log("Return response:", response)
+		await loadRecipes() // Refresh the list to show updated status
+	} catch (error) {
+		console.error("Error returning recipe:", error)
+		alert("Failed to mark recipe as done")
+	}
+}
+
 onMounted(() => {
 	console.log("Recipe component mounted")
 	loadRecipes()
@@ -404,5 +484,22 @@ onMounted(() => {
 <style scoped>
 .v-card-title {
 	word-break: break-word;
+}
+
+.unavailable {
+	position: relative;
+}
+
+.unavailable::after {
+	content: "Recipe in Use";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgba(0, 0, 0, 0.7);
+	color: white;
+	padding: 8px 16px;
+	border-radius: 4px;
+	z-index: 1;
 }
 </style>
