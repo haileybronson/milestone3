@@ -14,10 +14,12 @@
 				cols="12"
 				sm="6"
 				md="4"
+				class="d-flex"
 			>
 				<v-card
-					class="mx-auto"
-					max-width="400"
+					class="mx-auto mb-4 flex-grow-1"
+					min-width="300"
+					max-width="450"
 					:class="{
 						unavailable:
 							recipe.checked_qty >= recipe.inventory_total_qty
@@ -56,36 +58,53 @@
 						</div>
 					</v-card-text>
 					<v-card-actions>
-						<v-btn
-							:disabled="
-								recipe.checked_qty >= recipe.inventory_total_qty
-							"
-							color="primary"
-							@click="checkoutRecipe(recipe)"
+						<template
 							v-if="
 								recipe.checked_qty < recipe.inventory_total_qty
 							"
 						>
-							Save for Cooking
-						</v-btn>
-						<v-btn
-							color="success"
-							@click="returnRecipe(recipe)"
-							v-if="recipe.checked_qty > 0"
-						>
-							Mark as Done
-						</v-btn>
+							<v-btn
+								color="primary"
+								@click="checkoutRecipe(recipe)"
+								class="mr-2"
+							>
+								Save for Cooking
+							</v-btn>
+						</template>
+						<template v-else>
+							<v-btn
+								color="success"
+								@click="returnRecipe(recipe)"
+								class="mr-2"
+							>
+								Mark as Done
+							</v-btn>
+						</template>
 						<v-spacer></v-spacer>
-						<v-btn icon @click="editRecipe(recipe)">
-							<v-icon>mdi-pencil</v-icon>
-						</v-btn>
-						<v-btn
-							icon
-							@click="confirmDelete(recipe)"
-							color="error"
-						>
-							<v-icon>mdi-delete</v-icon>
-						</v-btn>
+						<div class="d-flex">
+							<v-btn
+								icon
+								@click="editRecipe(recipe)"
+								class="mr-2"
+							>
+								<v-icon>mdi-pencil</v-icon>
+							</v-btn>
+							<v-btn
+								icon
+								@click="confirmDelete(recipe)"
+								color="error"
+								:disabled="recipe.checked_qty > 0"
+							>
+								<v-tooltip activator="parent" location="top">
+									<span v-if="recipe.checked_qty > 0"
+										>Cannot delete recipe while it is in
+										use</span
+									>
+									<span v-else>Delete recipe</span>
+								</v-tooltip>
+								<v-icon>mdi-delete</v-icon>
+							</v-btn>
+						</div>
 					</v-card-actions>
 				</v-card>
 			</v-col>
@@ -266,73 +285,42 @@ const loadRecipes = async () => {
 	}
 }
 
-const handleFileInput = (event: Event | File | null) => {
-	if (!event) {
-		console.log("No file selected")
+const handleFileInput = (event: Event) => {
+	const input = event.target as HTMLInputElement
+	if (!input.files?.length) {
 		newRecipe.value.image = null
 		return
 	}
 
-	// If event is a File object
-	if (event instanceof File) {
-		console.log("File input changed (File object):", event)
-		console.log("File details:", {
-			name: event.name,
-			type: event.type,
-			size: event.size,
-			lastModified: event.lastModified
-		})
+	const file = input.files[0]
+	console.log("File details:", {
+		name: file.name,
+		type: file.type,
+		size: file.size
+	})
 
-		// Accept any image file
-		if (!event.type.startsWith("image/")) {
-			alert("Please select an image file")
-			newRecipe.value.image = null
-			return
-		}
-
-		// Validate file size (max 2MB)
-		if (event.size > 2 * 1024 * 1024) {
-			alert("File size must be less than 2MB")
-			newRecipe.value.image = null
-			return
-		}
-
-		newRecipe.value.image = event
-		console.log("Updated newRecipe.image:", newRecipe.value.image)
-	} else {
-		// If event is an Event object
-		const target = event.target as HTMLInputElement
-		if (target && target.files && target.files[0]) {
-			const file = target.files[0]
-			console.log("File input changed (Event):", file)
-			console.log("File details:", {
-				name: file.name,
-				type: file.type,
-				size: file.size,
-				lastModified: file.lastModified
-			})
-
-			// Accept any image file
-			if (!file.type.startsWith("image/")) {
-				alert("Please select an image file")
-				newRecipe.value.image = null
-				return
-			}
-
-			// Validate file size (max 2MB)
-			if (file.size > 2 * 1024 * 1024) {
-				alert("File size must be less than 2MB")
-				newRecipe.value.image = null
-				return
-			}
-
-			newRecipe.value.image = file
-			console.log("Updated newRecipe.image:", newRecipe.value.image)
-		} else {
-			console.log("No file selected")
-			newRecipe.value.image = null
-		}
+	// Check file type
+	const allowedTypes = [
+		"image/jpeg",
+		"image/png",
+		"image/gif",
+		"image/svg+xml"
+	]
+	if (!allowedTypes.includes(file.type)) {
+		alert("Please select a valid image file (JPEG, PNG, GIF, or SVG)")
+		newRecipe.value.image = null
+		return
 	}
+
+	// Check file size (10MB limit)
+	const maxSize = 10 * 1024 * 1024 // 10MB in bytes
+	if (file.size > maxSize) {
+		alert("File size must be less than 10MB")
+		newRecipe.value.image = null
+		return
+	}
+
+	newRecipe.value.image = file
 }
 
 const editRecipe = (recipe: any) => {
@@ -347,6 +335,13 @@ const editRecipe = (recipe: any) => {
 }
 
 const confirmDelete = (recipe: any) => {
+	// Don't allow deletion if recipe is checked out
+	if (recipe.checked_qty > 0) {
+		alert(
+			"Cannot delete recipe while it is in use. Please wait until it is marked as done."
+		)
+		return
+	}
 	recipeToDelete.value = recipe
 	showDeleteDialog.value = true
 }
@@ -355,12 +350,14 @@ const deleteRecipe = async () => {
 	if (!recipeToDelete.value) return
 
 	try {
-		console.log("Deleting recipe:", recipeToDelete.value.name)
+		const recipeName = recipeToDelete.value.name
+		console.log("Deleting recipe:", recipeName)
 		await RecipeService.deleteRecipe(recipeToDelete.value.id)
 		console.log("Recipe deleted successfully")
 		await loadRecipes() // Refresh the list
 		showDeleteDialog.value = false
 		recipeToDelete.value = null
+		alert(`Recipe "${recipeName}" was deleted successfully!`)
 	} catch (error) {
 		console.error("Error deleting recipe:", error)
 		if (error.response) {
@@ -414,9 +411,11 @@ const submitRecipe = async () => {
 				formData
 			)
 			console.log("Update response:", response)
+			alert(`Recipe "${newRecipe.value.name}" was updated successfully!`)
 		} else {
 			const response = await RecipeService.createRecipe(formData)
 			console.log("Create response:", response)
+			alert(`Recipe "${newRecipe.value.name}" was created successfully!`)
 		}
 		await loadRecipes()
 		closeDialog()
