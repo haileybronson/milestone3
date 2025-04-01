@@ -220,9 +220,72 @@ const loadRecipes = async () => {
 	}
 }
 
-const handleFileInput = (file: File) => {
-	if (file) {
-		newRecipe.value.image = file
+const handleFileInput = (event: Event | File | null) => {
+	if (!event) {
+		console.log("No file selected")
+		newRecipe.value.image = null
+		return
+	}
+
+	// If event is a File object
+	if (event instanceof File) {
+		console.log("File input changed (File object):", event)
+		console.log("File details:", {
+			name: event.name,
+			type: event.type,
+			size: event.size,
+			lastModified: event.lastModified
+		})
+
+		// Accept any image file
+		if (!event.type.startsWith("image/")) {
+			alert("Please select an image file")
+			newRecipe.value.image = null
+			return
+		}
+
+		// Validate file size (max 2MB)
+		if (event.size > 2 * 1024 * 1024) {
+			alert("File size must be less than 2MB")
+			newRecipe.value.image = null
+			return
+		}
+
+		newRecipe.value.image = event
+		console.log("Updated newRecipe.image:", newRecipe.value.image)
+	} else {
+		// If event is an Event object
+		const target = event.target as HTMLInputElement
+		if (target && target.files && target.files[0]) {
+			const file = target.files[0]
+			console.log("File input changed (Event):", file)
+			console.log("File details:", {
+				name: file.name,
+				type: file.type,
+				size: file.size,
+				lastModified: file.lastModified
+			})
+
+			// Accept any image file
+			if (!file.type.startsWith("image/")) {
+				alert("Please select an image file")
+				newRecipe.value.image = null
+				return
+			}
+
+			// Validate file size (max 2MB)
+			if (file.size > 2 * 1024 * 1024) {
+				alert("File size must be less than 2MB")
+				newRecipe.value.image = null
+				return
+			}
+
+			newRecipe.value.image = file
+			console.log("Updated newRecipe.image:", newRecipe.value.image)
+		} else {
+			console.log("No file selected")
+			newRecipe.value.image = null
+		}
 	}
 }
 
@@ -269,38 +332,35 @@ const submitRecipe = async () => {
 		formData.append("name", newRecipe.value.name)
 		formData.append("description", newRecipe.value.description)
 		if (newRecipe.value.image) {
+			console.log("Appending file to FormData:", {
+				fileName: newRecipe.value.image.name,
+				fileType: newRecipe.value.image.type,
+				fileSize: newRecipe.value.image.size
+			})
 			formData.append("recipe_cover_picture", newRecipe.value.image)
 		}
 
-		// Enhanced debug logging
-		console.log("Form Data Contents:")
-		console.log("Recipe Name:", newRecipe.value.name)
-		console.log("Description:", newRecipe.value.description)
-		console.log("Image File:", newRecipe.value.image)
-
-		if (newRecipe.value.image) {
-			console.log("Image Details:", {
-				name: newRecipe.value.image.name,
-				type: newRecipe.value.image.type,
-				size: newRecipe.value.image.size
-			})
-		}
-
+		// Debug logging for FormData
 		console.log("FormData entries:")
 		for (let pair of formData.entries()) {
-			console.log(
-				pair[0] +
-					": " +
-					(pair[1] instanceof File
-						? `File(${pair[1].name}, ${pair[1].type}, ${pair[1].size} bytes)`
-						: pair[1])
-			)
+			if (pair[1] instanceof File) {
+				console.log(
+					`${pair[0]}: File(${pair[1].name}, ${pair[1].type}, ${pair[1].size} bytes)`
+				)
+			} else {
+				console.log(`${pair[0]}: ${pair[1]}`)
+			}
 		}
 
 		if (isEditing.value && editingRecipeId.value) {
-			await RecipeService.updateRecipe(editingRecipeId.value, formData)
+			const response = await RecipeService.updateRecipe(
+				editingRecipeId.value,
+				formData
+			)
+			console.log("Update response:", response)
 		} else {
-			await RecipeService.createRecipe(formData)
+			const response = await RecipeService.createRecipe(formData)
+			console.log("Create response:", response)
 		}
 		await loadRecipes()
 		closeDialog()
@@ -312,28 +372,23 @@ const submitRecipe = async () => {
 			if (error.response.status === 422) {
 				const validationErrors = error.response.data.data
 				console.error("Validation errors:", validationErrors)
-				// Log each validation error in detail
-				Object.entries(validationErrors).forEach(
-					([field, messages]) => {
-						console.error(`${field} validation errors:`, messages)
+				// Show detailed error message
+				let errorMessage = "Validation failed:\n"
+				if (typeof validationErrors === "object") {
+					for (const [field, messages] of Object.entries(
+						validationErrors
+					)) {
+						errorMessage += `${field}: ${
+							Array.isArray(messages)
+								? messages.join(", ")
+								: messages
+						}\n`
 					}
-				)
-				// Show all validation messages to the user
-				const errorMessages = Object.entries(validationErrors)
-					.map(
-						([field, messages]) =>
-							`${field}: ${messages.join(", ")}`
-					)
-					.join("\n")
-				alert("Validation failed:\n" + errorMessages)
+				} else {
+					errorMessage += JSON.stringify(validationErrors, null, 2)
+				}
+				alert(errorMessage)
 			}
-		} else if (error.errors) {
-			// Handle the structured error we throw
-			console.error("Validation errors:", error.errors)
-			const errorMessages = Object.entries(error.errors)
-				.map(([field, messages]) => `${field}: ${messages.join(", ")}`)
-				.join("\n")
-			alert("Validation failed:\n" + errorMessages)
 		}
 	} finally {
 		isSubmitting.value = false
