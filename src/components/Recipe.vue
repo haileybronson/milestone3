@@ -141,37 +141,18 @@ const newRecipe = ref({
 })
 
 const getImageUrl = (imagePath: string) => {
-	const baseUrl = import.meta.env.VITE_AWS_S3_URL
-	return `${baseUrl}/${imagePath}`
+	if (!imagePath)
+		return "https://via.placeholder.com/400x300?text=No+Image+Available"
+	if (imagePath.startsWith("http")) return imagePath
+	return `${import.meta.env.VITE_AWS_S3_URL}/${imagePath}`
 }
 
 const handleImageError = async (error: Event, recipe: any) => {
 	console.error("Image failed to load for recipe:", recipe.name)
 	console.error("Image URL:", recipe.recipe_cover_picture)
 	console.error("Error details:", error)
-
-	try {
-		const response = await fetch(getImageUrl(recipe.recipe_cover_picture), {
-			mode: "cors",
-			headers: {
-				Accept: "image/*"
-			}
-		})
-
-		console.log(`Image fetch response for ${recipe.name}:`, {
-			status: response.status,
-			statusText: response.statusText,
-			headers: Object.fromEntries(response.headers.entries())
-		})
-
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`)
-		}
-	} catch (error) {
-		console.error(`Fetch error for ${recipe.name}:`, error)
-		recipe.recipe_cover_picture =
-			"https://via.placeholder.com/400x300?text=Recipe+Image+Not+Available"
-	}
+	recipe.recipe_cover_picture =
+		"https://via.placeholder.com/400x300?text=Recipe+Image+Not+Available"
 }
 
 const loadRecipes = async () => {
@@ -208,10 +189,30 @@ const loadRecipes = async () => {
 
 		console.log("Making API request with token:", user.token)
 		const response = await RecipeService.getRecipes()
-		console.log("Recipes loaded successfully:", response)
-		recipes.value = response
+		console.log("Raw API Response:", response)
+
+		if (!Array.isArray(response)) {
+			console.error("Expected array response but got:", typeof response)
+			return
+		}
+
+		recipes.value = response.map((recipe) => ({
+			id: recipe.id,
+			name: recipe.name,
+			description: recipe.description,
+			recipe_cover_picture: recipe.recipe_cover_picture,
+			inventory_total_qty: recipe.inventory_total_qty,
+			checked_qty: recipe.checked_qty
+		}))
+
+		console.log("Processed recipes:", recipes.value)
 	} catch (error) {
 		console.error("Error loading recipes:", error)
+		if (error.response) {
+			console.error("Error response data:", error.response.data)
+			console.error("Error response status:", error.response.status)
+			console.error("Error response headers:", error.response.headers)
+		}
 		if (error.response?.status === 401) {
 			store.dispatch("auth/logout")
 			router.push("/")
@@ -264,18 +265,76 @@ const submitRecipe = async () => {
 
 	isSubmitting.value = true
 	try {
-		if (isEditing.value) {
-			await RecipeService.updateRecipe(
-				editingRecipeId.value,
-				newRecipe.value
+		const formData = new FormData()
+		formData.append("name", newRecipe.value.name)
+		formData.append("description", newRecipe.value.description)
+		if (newRecipe.value.image) {
+			formData.append("recipe_cover_picture", newRecipe.value.image)
+		}
+
+		// Enhanced debug logging
+		console.log("Form Data Contents:")
+		console.log("Recipe Name:", newRecipe.value.name)
+		console.log("Description:", newRecipe.value.description)
+		console.log("Image File:", newRecipe.value.image)
+
+		if (newRecipe.value.image) {
+			console.log("Image Details:", {
+				name: newRecipe.value.image.name,
+				type: newRecipe.value.image.type,
+				size: newRecipe.value.image.size
+			})
+		}
+
+		console.log("FormData entries:")
+		for (let pair of formData.entries()) {
+			console.log(
+				pair[0] +
+					": " +
+					(pair[1] instanceof File
+						? `File(${pair[1].name}, ${pair[1].type}, ${pair[1].size} bytes)`
+						: pair[1])
 			)
+		}
+
+		if (isEditing.value && editingRecipeId.value) {
+			await RecipeService.updateRecipe(editingRecipeId.value, formData)
 		} else {
-			await RecipeService.createRecipe(newRecipe.value)
+			await RecipeService.createRecipe(formData)
 		}
 		await loadRecipes()
 		closeDialog()
 	} catch (error) {
 		console.error("Error saving recipe:", error)
+		if (error.response) {
+			console.error("Error response data:", error.response.data)
+			console.error("Error response status:", error.response.status)
+			if (error.response.status === 422) {
+				const validationErrors = error.response.data.data
+				console.error("Validation errors:", validationErrors)
+				// Log each validation error in detail
+				Object.entries(validationErrors).forEach(
+					([field, messages]) => {
+						console.error(`${field} validation errors:`, messages)
+					}
+				)
+				// Show all validation messages to the user
+				const errorMessages = Object.entries(validationErrors)
+					.map(
+						([field, messages]) =>
+							`${field}: ${messages.join(", ")}`
+					)
+					.join("\n")
+				alert("Validation failed:\n" + errorMessages)
+			}
+		} else if (error.errors) {
+			// Handle the structured error we throw
+			console.error("Validation errors:", error.errors)
+			const errorMessages = Object.entries(error.errors)
+				.map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+				.join("\n")
+			alert("Validation failed:\n" + errorMessages)
+		}
 	} finally {
 		isSubmitting.value = false
 	}
