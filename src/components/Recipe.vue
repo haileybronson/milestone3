@@ -37,24 +37,235 @@
 								: ''
 						"
 					>
-						<v-card-title class="text-white bg-black bg-opacity-50">
-							{{ recipe.name }}
-						</v-card-title>
+						<v-card-item>
+							<v-card-title
+								class="text-h6 bg-black bg-opacity-60 text-white px-2 rounded"
+							>
+								{{ recipe.name }}
+							</v-card-title>
+						</v-card-item>
 					</v-img>
 					<v-card-text>
-						<div class="text-subtitle-1 py-2">
-							{{ recipe.description }}
+						<p>{{ recipe.description }}</p>
+
+						<!-- Tags Display -->
+						<div
+							v-if="recipe.tags && recipe.tags.length > 0"
+							class="mt-2"
+						>
+							<v-chip-group>
+								<v-chip
+									v-for="tag in recipe.tags"
+									:key="tag.id"
+									size="small"
+									color="primary"
+									variant="outlined"
+									class="mr-1"
+								>
+									{{ tag.name }}
+								</v-chip>
+							</v-chip-group>
 						</div>
-						<div class="text-caption">
-							Status:
-							{{
-								recipe.checked_qty >= recipe.inventory_total_qty
-									? "Currently in use"
-									: "Available"
-							}}
-							<br />
-							Inventory:
-							{{ recipe.inventory_total_qty }} available
+
+						<!-- Ingredients Display -->
+						<div
+							v-if="
+								recipe.ingredients &&
+								recipe.ingredients.length > 0
+							"
+							class="mt-2"
+						>
+							<v-expansion-panels variant="accordion">
+								<v-expansion-panel>
+									<v-expansion-panel-title>
+										<v-icon class="mr-2"
+											>mdi-food-variant</v-icon
+										>
+										Ingredients ({{
+											recipe.ingredients.length
+										}})
+									</v-expansion-panel-title>
+									<v-expansion-panel-text>
+										<v-list density="compact" class="pa-0">
+											<v-list-item
+												v-for="ingredient in recipe.ingredients"
+												:key="ingredient.id"
+												class="px-0"
+											>
+												<v-list-item-title>
+													{{ ingredient.name }}
+													<span
+														v-if="
+															ingredient.pivot
+																.quantity
+														"
+													>
+														-
+														{{
+															ingredient.pivot
+																.quantity
+														}}
+														{{ ingredient.unit }}
+													</span>
+												</v-list-item-title>
+												<v-list-item-subtitle
+													v-if="
+														ingredient.pivot.notes
+													"
+												>
+													{{ ingredient.pivot.notes }}
+												</v-list-item-subtitle>
+											</v-list-item>
+										</v-list>
+									</v-expansion-panel-text>
+								</v-expansion-panel>
+							</v-expansion-panels>
+						</div>
+
+						<!-- Nutrition Info Display -->
+						<div v-if="recipe.nutritionInfo" class="mt-2">
+							<v-expansion-panels variant="accordion">
+								<v-expansion-panel>
+									<v-expansion-panel-title>
+										<v-icon class="mr-2"
+											>mdi-nutrition</v-icon
+										>
+										Nutrition Facts
+									</v-expansion-panel-title>
+									<v-expansion-panel-text>
+										<v-list density="compact" class="pa-0">
+											<v-list-item
+												v-if="
+													recipe.nutritionInfo
+														.calories
+												"
+												class="px-0"
+											>
+												<v-list-item-title>
+													Calories:
+													{{
+														recipe.nutritionInfo
+															.calories
+													}}
+												</v-list-item-title>
+											</v-list-item>
+											<v-list-item
+												v-if="
+													recipe.nutritionInfo.protein
+												"
+												class="px-0"
+											>
+												<v-list-item-title>
+													Protein:
+													{{
+														recipe.nutritionInfo
+															.protein
+													}}g
+												</v-list-item-title>
+											</v-list-item>
+											<v-list-item
+												v-if="
+													recipe.nutritionInfo.carbs
+												"
+												class="px-0"
+											>
+												<v-list-item-title>
+													Carbs:
+													{{
+														recipe.nutritionInfo
+															.carbs
+													}}g
+												</v-list-item-title>
+											</v-list-item>
+											<v-list-item
+												v-if="recipe.nutritionInfo.fat"
+												class="px-0"
+											>
+												<v-list-item-title>
+													Fat:
+													{{
+														recipe.nutritionInfo
+															.fat
+													}}g
+												</v-list-item-title>
+											</v-list-item>
+											<v-list-item
+												v-if="
+													recipe.nutritionInfo.fiber
+												"
+												class="px-0"
+											>
+												<v-list-item-title>
+													Fiber:
+													{{
+														recipe.nutritionInfo
+															.fiber
+													}}g
+												</v-list-item-title>
+											</v-list-item>
+											<v-list-item
+												v-if="
+													recipe.nutritionInfo.sugar
+												"
+												class="px-0"
+											>
+												<v-list-item-title>
+													Sugar:
+													{{
+														recipe.nutritionInfo
+															.sugar
+													}}g
+												</v-list-item-title>
+											</v-list-item>
+										</v-list>
+									</v-expansion-panel-text>
+								</v-expansion-panel>
+							</v-expansion-panels>
+						</div>
+
+						<!-- Creator Info Display -->
+						<div
+							v-if="recipe.user"
+							class="mt-2 d-flex align-center"
+						>
+							<v-icon class="mr-2">mdi-account</v-icon>
+							<span>Created by: {{ recipe.user.name }}</span>
+						</div>
+
+						<div class="mt-2">
+							<v-badge
+								:color="
+									recipe.checked_qty === 0
+										? 'success'
+										: 'warning'
+								"
+								:content="
+									recipe.checked_qty +
+									'/' +
+									recipe.inventory_total_qty
+								"
+								inline
+							>
+								Status:
+							</v-badge>
+							<span
+								:class="{
+									'text-success':
+										recipe.checked_qty <
+										recipe.inventory_total_qty,
+									'text-warning':
+										recipe.checked_qty ===
+										recipe.inventory_total_qty
+								}"
+								class="ml-2"
+							>
+								{{
+									recipe.checked_qty <
+									recipe.inventory_total_qty
+										? "Available"
+										: "In Use"
+								}}
+							</span>
 						</div>
 					</v-card-text>
 					<v-card-actions>
@@ -261,15 +472,7 @@ const loadRecipes = async () => {
 			return
 		}
 
-		recipes.value = response.map((recipe) => ({
-			id: recipe.id,
-			name: recipe.name,
-			description: recipe.description,
-			recipe_cover_picture: recipe.recipe_cover_picture,
-			inventory_total_qty: recipe.inventory_total_qty,
-			checked_qty: recipe.checked_qty
-		}))
-
+		recipes.value = response
 		console.log("Processed recipes:", recipes.value)
 	} catch (error) {
 		console.error("Error loading recipes:", error)
