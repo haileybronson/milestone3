@@ -1033,12 +1033,45 @@ const searchTags = async (query) => {
 }
 
 const searchIngredients = async (query) => {
-	if (query.length < 2) return
+	if (query.length < 2) {
+		// If search query is too short, show all ingredients
+		try {
+			const response = await IngredientService.getIngredients()
+			availableIngredients.value = response
+		} catch (error) {
+			console.error("Error loading all ingredients:", error)
+		}
+		return
+	}
+
 	try {
+		// First try to use the search endpoint
 		const response = await IngredientService.searchIngredients(query)
 		availableIngredients.value = response
 	} catch (error) {
 		console.error("Error searching ingredients:", error)
+
+		// If search endpoint fails (404), fall back to local filtering
+		try {
+			// Get all ingredients
+			const allIngredients = await IngredientService.getIngredients()
+
+			// Filter locally based on the search query
+			const lowercaseQuery = query.toLowerCase()
+			availableIngredients.value = allIngredients.filter((ingredient) =>
+				ingredient.name.toLowerCase().includes(lowercaseQuery)
+			)
+
+			console.log(
+				"Fallback local search results:",
+				availableIngredients.value
+			)
+		} catch (fallbackError) {
+			console.error(
+				"Error with fallback ingredient search:",
+				fallbackError
+			)
+		}
 	}
 }
 

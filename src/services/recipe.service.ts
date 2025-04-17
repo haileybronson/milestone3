@@ -69,6 +69,7 @@ class RecipeService {
 
 	updateRecipe(id: number, formData: FormData) {
 		console.log("Updating recipe with formData:", formData)
+
 		// Log the content of formData
 		for (let pair of formData.entries()) {
 			console.log(
@@ -78,6 +79,8 @@ class RecipeService {
 			)
 		}
 
+		// Using POST for updates because the Laravel backend is configured to accept POST for updates
+		// This is important! The route uses POST for update operations, not PUT/PATCH
 		return axios
 			.post(API_URL + `recipes/${id}`, formData, {
 				headers: {

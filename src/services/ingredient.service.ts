@@ -4,11 +4,15 @@ import authHeader from "./auth-header"
 
 class IngredientService {
 	getIngredients() {
+		console.log("Getting ingredients, API URL:", API_URL + "ingredients")
+		console.log("Auth headers:", authHeader())
+
 		return axios
 			.get(API_URL + "ingredients", {
 				headers: authHeader()
 			})
 			.then((response) => {
+				console.log("Ingredients response:", response.data)
 				return response.data.data
 			})
 			.catch((error) => {
@@ -18,6 +22,8 @@ class IngredientService {
 	}
 
 	searchIngredients(query: string) {
+		console.log("Searching ingredients with query:", query)
+
 		return axios
 			.get(
 				API_URL + `ingredients/search?q=${encodeURIComponent(query)}`,
@@ -26,6 +32,7 @@ class IngredientService {
 				}
 			)
 			.then((response) => {
+				console.log("Search ingredients response:", response.data)
 				return response.data.data
 			})
 			.catch((error) => {
