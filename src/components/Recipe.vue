@@ -48,6 +48,113 @@
 					<v-card-text>
 						<p>{{ recipe.description }}</p>
 
+						<!-- Dietary Preferences Display -->
+						<div class="mt-2">
+							<div class="d-flex flex-wrap gap-1">
+								<v-chip
+									v-if="recipe.is_vegan"
+									size="x-small"
+									color="green-lighten-1"
+									class="mr-1 mb-1"
+								>
+									<v-icon size="x-small" start
+										>mdi-leaf</v-icon
+									>
+									Vegan
+								</v-chip>
+								<v-chip
+									v-if="recipe.is_vegetarian"
+									size="x-small"
+									color="light-green"
+									class="mr-1 mb-1"
+								>
+									<v-icon size="x-small" start
+										>mdi-food-apple</v-icon
+									>
+									Vegetarian
+								</v-chip>
+								<v-chip
+									v-if="recipe.is_gluten_free"
+									size="x-small"
+									color="amber-lighten-1"
+									class="mr-1 mb-1"
+								>
+									<v-icon size="x-small" start
+										>mdi-barley-off</v-icon
+									>
+									Gluten Free
+								</v-chip>
+								<v-chip
+									v-if="recipe.is_dairy_free"
+									size="x-small"
+									color="blue-grey-lighten-3"
+									class="mr-1 mb-1"
+								>
+									<v-icon size="x-small" start
+										>mdi-cow-off</v-icon
+									>
+									Dairy Free
+								</v-chip>
+								<v-chip
+									v-if="recipe.is_nut_free"
+									size="x-small"
+									color="brown-lighten-2"
+									class="mr-1 mb-1"
+								>
+									<v-icon size="x-small" start
+										>mdi-peanut-off</v-icon
+									>
+									Nut Free
+								</v-chip>
+							</div>
+						</div>
+
+						<!-- Cooking Details Display -->
+						<div
+							class="d-flex align-center mt-2 gap-3 flex-wrap"
+							v-if="
+								recipe.prep_time_minutes ||
+								recipe.cook_time_minutes ||
+								recipe.difficulty
+							"
+						>
+							<div
+								v-if="recipe.prep_time_minutes"
+								class="d-flex align-center"
+							>
+								<v-icon size="small" class="mr-1"
+									>mdi-knife</v-icon
+								>
+								<span class="text-caption"
+									>Prep:
+									{{ recipe.prep_time_minutes }} min</span
+								>
+							</div>
+							<div
+								v-if="recipe.cook_time_minutes"
+								class="d-flex align-center"
+							>
+								<v-icon size="small" class="mr-1"
+									>mdi-stove</v-icon
+								>
+								<span class="text-caption"
+									>Cook:
+									{{ recipe.cook_time_minutes }} min</span
+								>
+							</div>
+							<div
+								v-if="recipe.difficulty"
+								class="d-flex align-center"
+							>
+								<v-icon size="small" class="mr-1"
+									>mdi-chef-hat</v-icon
+								>
+								<span class="text-caption text-capitalize">{{
+									recipe.difficulty
+								}}</span>
+							</div>
+						</div>
+
 						<!-- Tags Display -->
 						<div
 							v-if="recipe.tags && recipe.tags.length > 0"
@@ -322,11 +429,12 @@
 		</v-row>
 
 		<!-- Add/Edit Recipe Dialog -->
-		<v-dialog v-model="showAddRecipeDialog" max-width="500px">
+		<v-dialog v-model="showAddRecipeDialog" max-width="800px">
 			<v-card>
-				<v-card-title>{{
+				<v-card-title class="text-h5">{{
 					isEditing ? "Edit Recipe" : "Add New Recipe"
 				}}</v-card-title>
+				<v-divider></v-divider>
 				<v-card-text>
 					<v-form
 						v-model="isFormValid"
@@ -337,12 +445,18 @@
 							label="Recipe Name"
 							:rules="[(v) => !!v || 'Name is required']"
 							required
+							:disabled="isSubmitting"
+							variant="outlined"
+							density="comfortable"
 						></v-text-field>
 						<v-textarea
 							v-model="newRecipe.description"
 							label="Description"
 							:rules="[(v) => !!v || 'Description is required']"
 							required
+							:disabled="isSubmitting"
+							variant="outlined"
+							density="comfortable"
 						></v-textarea>
 						<v-file-input
 							v-model="newRecipe.image"
@@ -356,15 +470,333 @@
 							]"
 							:required="!isEditing"
 							@change="handleFileInput"
+							:disabled="isSubmitting"
+							variant="outlined"
+							show-size
+							density="comfortable"
+							prepend-icon="mdi-camera"
 						></v-file-input>
+
+						<!-- Dietary Preferences Section -->
+						<v-card
+							class="mb-4 pa-3"
+							variant="outlined"
+							:disabled="isSubmitting"
+						>
+							<v-card-title
+								class="text-subtitle-1 pb-2 d-flex align-center"
+							>
+								<v-icon class="mr-2">mdi-food-apple</v-icon>
+								Dietary Preferences
+							</v-card-title>
+							<v-row>
+								<v-col cols="12" sm="4">
+									<v-checkbox
+										v-model="newRecipe.is_vegan"
+										label="Vegan"
+										hide-details
+										:disabled="isSubmitting"
+									></v-checkbox>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-checkbox
+										v-model="newRecipe.is_vegetarian"
+										label="Vegetarian"
+										hide-details
+										:disabled="isSubmitting"
+									></v-checkbox>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-checkbox
+										v-model="newRecipe.is_gluten_free"
+										label="Gluten Free"
+										hide-details
+										:disabled="isSubmitting"
+									></v-checkbox>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-checkbox
+										v-model="newRecipe.is_dairy_free"
+										label="Dairy Free"
+										hide-details
+										:disabled="isSubmitting"
+									></v-checkbox>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-checkbox
+										v-model="newRecipe.is_nut_free"
+										label="Nut Free"
+										hide-details
+										:disabled="isSubmitting"
+									></v-checkbox>
+								</v-col>
+							</v-row>
+						</v-card>
+
+						<!-- Cooking Details Section -->
+						<v-card
+							class="mb-4 pa-3"
+							variant="outlined"
+							:disabled="isSubmitting"
+						>
+							<v-card-title class="text-subtitle-1 pb-2"
+								>Cooking Details</v-card-title
+							>
+							<v-row>
+								<v-col cols="12" sm="4">
+									<v-text-field
+										v-model.number="
+											newRecipe.prep_time_minutes
+										"
+										label="Prep Time (minutes)"
+										type="number"
+										min="0"
+										hide-details
+										:disabled="isSubmitting"
+									></v-text-field>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-text-field
+										v-model.number="
+											newRecipe.cook_time_minutes
+										"
+										label="Cook Time (minutes)"
+										type="number"
+										min="0"
+										hide-details
+										:disabled="isSubmitting"
+									></v-text-field>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-select
+										v-model="newRecipe.difficulty"
+										label="Difficulty"
+										:items="['easy', 'medium', 'hard']"
+										hide-details
+										:disabled="isSubmitting"
+									></v-select>
+								</v-col>
+							</v-row>
+						</v-card>
+
+						<!-- Tags Section -->
+						<v-card
+							class="mb-4 pa-3"
+							variant="outlined"
+							:disabled="isSubmitting"
+						>
+							<v-card-title class="text-subtitle-1 pb-2"
+								>Tags</v-card-title
+							>
+							<v-combobox
+								v-model="newRecipe.tags"
+								:items="availableTags"
+								item-title="name"
+								item-value="id"
+								chips
+								multiple
+								label="Select Tags"
+								@update:search="searchTags"
+								:disabled="isSubmitting"
+							>
+								<template v-slot:selection="{ item }">
+									<v-chip>{{ item.name || item.raw }}</v-chip>
+								</template>
+							</v-combobox>
+						</v-card>
+
+						<!-- Ingredients Section -->
+						<v-card
+							class="mb-4 pa-3"
+							variant="outlined"
+							:disabled="isSubmitting"
+						>
+							<v-card-title class="text-subtitle-1 pb-2">
+								Ingredients
+								<v-btn
+									icon
+									size="small"
+									color="primary"
+									class="ml-auto"
+									@click="addIngredient"
+									:disabled="isSubmitting"
+								>
+									<v-icon>mdi-plus</v-icon>
+								</v-btn>
+							</v-card-title>
+
+							<div
+								v-for="(
+									ingredient, index
+								) in newRecipe.ingredients"
+								:key="index"
+								class="d-flex align-center mb-2"
+								:disabled="isSubmitting"
+							>
+								<v-autocomplete
+									v-model="ingredient.id"
+									:items="availableIngredients"
+									item-title="name"
+									item-value="id"
+									label="Ingredient"
+									hide-details
+									class="mr-2"
+									@update:search="searchIngredients"
+									:disabled="isSubmitting"
+								></v-autocomplete>
+								<v-text-field
+									v-model="ingredient.quantity"
+									label="Quantity"
+									type="number"
+									hide-details
+									class="mr-2"
+									style="max-width: 100px"
+									:disabled="isSubmitting"
+								></v-text-field>
+								<v-text-field
+									v-model="ingredient.notes"
+									label="Notes (e.g., sliced)"
+									hide-details
+									class="mr-2"
+									:disabled="isSubmitting"
+								></v-text-field>
+								<v-btn
+									icon
+									color="error"
+									size="small"
+									@click="removeIngredient(index)"
+									:disabled="isSubmitting"
+								>
+									<v-icon>mdi-delete</v-icon>
+								</v-btn>
+							</div>
+							<div
+								v-if="newRecipe.ingredients.length === 0"
+								class="text-center pa-2"
+								:disabled="isSubmitting"
+							>
+								No ingredients added. Click the + button to add
+								ingredients.
+							</div>
+						</v-card>
+
+						<!-- Nutrition Info Section -->
+						<v-card
+							class="mb-4 pa-3"
+							variant="outlined"
+							:disabled="isSubmitting"
+						>
+							<v-card-title class="text-subtitle-1 pb-2"
+								>Nutrition Information</v-card-title
+							>
+							<v-row>
+								<v-col cols="12" sm="4">
+									<v-text-field
+										v-model.number="
+											newRecipe.nutrition.calories
+										"
+										label="Calories"
+										type="number"
+										min="0"
+										hide-details
+										:disabled="isSubmitting"
+									></v-text-field>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-text-field
+										v-model.number="
+											newRecipe.nutrition.protein
+										"
+										label="Protein (g)"
+										type="number"
+										min="0"
+										hide-details
+										:disabled="isSubmitting"
+									></v-text-field>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-text-field
+										v-model.number="
+											newRecipe.nutrition.carbs
+										"
+										label="Carbs (g)"
+										type="number"
+										min="0"
+										hide-details
+										:disabled="isSubmitting"
+									></v-text-field>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-text-field
+										v-model.number="newRecipe.nutrition.fat"
+										label="Fat (g)"
+										type="number"
+										min="0"
+										hide-details
+										:disabled="isSubmitting"
+									></v-text-field>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-text-field
+										v-model.number="
+											newRecipe.nutrition.fiber
+										"
+										label="Fiber (g)"
+										type="number"
+										min="0"
+										hide-details
+										:disabled="isSubmitting"
+									></v-text-field>
+								</v-col>
+								<v-col cols="12" sm="4">
+									<v-text-field
+										v-model.number="
+											newRecipe.nutrition.sugar
+										"
+										label="Sugar (g)"
+										type="number"
+										min="0"
+										hide-details
+										:disabled="isSubmitting"
+									></v-text-field>
+								</v-col>
+								<v-col cols="12">
+									<v-textarea
+										v-model="newRecipe.nutrition.notes"
+										label="Nutrition Notes"
+										rows="2"
+										hide-details
+										:disabled="isSubmitting"
+									></v-textarea>
+								</v-col>
+							</v-row>
+						</v-card>
+
+						<!-- Form Error Alert -->
+						<v-alert
+							v-if="formError"
+							type="error"
+							variant="tonal"
+							closable
+							class="mt-4"
+							@click:close="formError = ''"
+						>
+							{{ formError }}
+						</v-alert>
 					</v-form>
 				</v-card-text>
+				<v-divider></v-divider>
 				<v-card-actions>
 					<v-spacer></v-spacer>
-					<v-btn color="error" @click="closeDialog">Cancel</v-btn>
+					<v-btn
+						color="error"
+						@click="closeDialog"
+						:disabled="isSubmitting"
+						>Cancel</v-btn
+					>
 					<v-btn
 						color="primary"
-						:disabled="!isFormValid"
+						:disabled="!isFormValid || isSubmitting"
 						:loading="isSubmitting"
 						@click="submitRecipe"
 					>
@@ -390,13 +822,29 @@
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
+
+		<!-- Snackbar for notifications -->
+		<v-snackbar
+			v-model="snackbar.show"
+			:color="snackbar.color"
+			:timeout="snackbar.timeout"
+		>
+			{{ snackbar.text }}
+			<template v-slot:actions>
+				<v-btn variant="text" @click="snackbar.show = false"
+					>Close</v-btn
+				>
+			</template>
+		</v-snackbar>
 	</v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
-import RecipeService from "@/services/recipe.service"
+import { ref, computed, onMounted, watch } from "vue"
 import { useRouter } from "vue-router"
+import RecipeService from "../services/recipe.service"
+import TagService from "../services/tag.service"
+import IngredientService from "../services/ingredient.service"
 import { useStore } from "vuex"
 
 const router = useRouter()
@@ -409,12 +857,80 @@ const isSubmitting = ref(false)
 const isEditing = ref(false)
 const editingRecipeId = ref(null)
 const recipeToDelete = ref(null)
+const availableTags = ref([])
+const availableIngredients = ref([])
+const snackbar = ref({
+	show: false,
+	text: "",
+	color: "success",
+	timeout: 5000
+})
+const formError = ref("")
 
-const newRecipe = ref({
+// Define better types for recipe data
+interface Ingredient {
+	id: number | null
+	name?: string
+	quantity: number | null
+	unit?: string
+	notes: string
+}
+
+interface NutritionInfo {
+	calories?: number | null
+	protein?: number | null
+	carbs?: number | null
+	fat?: number | null
+}
+
+interface Recipe {
+	id: number | null
+	name: string
+	description: string
+	instructions: string
+	prep_time_minutes: number | null
+	cook_time_minutes: number | null
+	serving_size: number | null
+	difficulty: string
+	is_vegetarian: boolean
+	is_vegan: boolean
+	is_gluten_free: boolean
+	is_dairy_free: boolean
+	is_nut_free: boolean
+	image: File | null
+	tags: number[]
+	ingredients: Ingredient[]
+	nutrition: NutritionInfo
+}
+
+// Fix the initial recipe object with proper typing
+const newRecipe = ref<Recipe>({
+	id: null,
 	name: "",
 	description: "",
-	image: null
+	instructions: "",
+	prep_time_minutes: null,
+	cook_time_minutes: null,
+	serving_size: null,
+	difficulty: "easy",
+	is_vegetarian: false,
+	is_vegan: false,
+	is_gluten_free: false,
+	is_dairy_free: false,
+	is_nut_free: false,
+	image: null,
+	tags: [],
+	ingredients: [],
+	nutrition: {
+		calories: null,
+		protein: null,
+		carbs: null,
+		fat: null
+	}
 })
+
+// Fix the API_URL declaration to handle ImportMeta type
+const API_URL = import.meta.env?.VITE_API_URL || "http://localhost:3000"
 
 const getImageUrl = (imagePath: string) => {
 	if (!imagePath)
@@ -488,6 +1004,57 @@ const loadRecipes = async () => {
 	}
 }
 
+const loadTags = async () => {
+	try {
+		const response = await TagService.getTags()
+		availableTags.value = response
+	} catch (error) {
+		console.error("Error loading tags:", error)
+	}
+}
+
+const loadIngredients = async () => {
+	try {
+		const response = await IngredientService.getIngredients()
+		availableIngredients.value = response
+	} catch (error) {
+		console.error("Error loading ingredients:", error)
+	}
+}
+
+const searchTags = async (query) => {
+	if (query.length < 2) return
+	try {
+		const response = await TagService.searchTags(query)
+		availableTags.value = response
+	} catch (error) {
+		console.error("Error searching tags:", error)
+	}
+}
+
+const searchIngredients = async (query) => {
+	if (query.length < 2) return
+	try {
+		const response = await IngredientService.searchIngredients(query)
+		availableIngredients.value = response
+	} catch (error) {
+		console.error("Error searching ingredients:", error)
+	}
+}
+
+const addIngredient = () => {
+	const newIngredient: Ingredient = {
+		id: null,
+		quantity: null,
+		notes: ""
+	}
+	newRecipe.value.ingredients.push(newIngredient)
+}
+
+const removeIngredient = (index) => {
+	newRecipe.value.ingredients.splice(index, 1)
+}
+
 const handleFileInput = (event: Event) => {
 	const input = event.target as HTMLInputElement
 	if (!input.files?.length) {
@@ -510,7 +1077,10 @@ const handleFileInput = (event: Event) => {
 		"image/svg+xml"
 	]
 	if (!allowedTypes.includes(file.type)) {
-		alert("Please select a valid image file (JPEG, PNG, GIF, or SVG)")
+		showSnackbar(
+			"Please select a valid image file (JPEG, PNG, GIF, or SVG)",
+			"error"
+		)
 		newRecipe.value.image = null
 		return
 	}
@@ -518,7 +1088,7 @@ const handleFileInput = (event: Event) => {
 	// Check file size (10MB limit)
 	const maxSize = 10 * 1024 * 1024 // 10MB in bytes
 	if (file.size > maxSize) {
-		alert("File size must be less than 10MB")
+		showSnackbar("File size must be less than 10MB", "error")
 		newRecipe.value.image = null
 		return
 	}
@@ -526,22 +1096,57 @@ const handleFileInput = (event: Event) => {
 	newRecipe.value.image = file
 }
 
-const editRecipe = (recipe: any) => {
+const editRecipe = (recipe) => {
 	isEditing.value = true
 	editingRecipeId.value = recipe.id
+
+	// Initialize with existing recipe data
 	newRecipe.value = {
+		id: recipe.id,
 		name: recipe.name,
 		description: recipe.description,
-		image: null
+		instructions: recipe.instructions,
+		prep_time_minutes: recipe.prep_time_minutes || null,
+		cook_time_minutes: recipe.cook_time_minutes || null,
+		serving_size: recipe.serving_size || null,
+		difficulty: recipe.difficulty || null,
+		is_vegetarian: recipe.is_vegetarian || false,
+		is_vegan: recipe.is_vegan || false,
+		is_gluten_free: recipe.is_gluten_free || false,
+		is_dairy_free: recipe.is_dairy_free || false,
+		is_nut_free: recipe.is_nut_free || false,
+		image: null,
+		tags: recipe.tags || [],
+		ingredients: [],
+		nutrition: {
+			calories: recipe.nutritionInfo?.calories || null,
+			protein: recipe.nutritionInfo?.protein || null,
+			carbs: recipe.nutritionInfo?.carbs || null,
+			fat: recipe.nutritionInfo?.fat || null,
+			fiber: recipe.nutritionInfo?.fiber || null,
+			sugar: recipe.nutritionInfo?.sugar || null,
+			notes: recipe.nutritionInfo?.notes || ""
+		}
 	}
+
+	// Format ingredients data for form
+	if (recipe.ingredients && recipe.ingredients.length > 0) {
+		newRecipe.value.ingredients = recipe.ingredients.map((ing) => ({
+			id: ing.id,
+			quantity: ing.pivot.quantity,
+			notes: ing.pivot.notes
+		}))
+	}
+
 	showAddRecipeDialog.value = true
 }
 
 const confirmDelete = (recipe: any) => {
 	// Don't allow deletion if recipe is checked out
 	if (recipe.checked_qty > 0) {
-		alert(
-			"Cannot delete recipe while it is in use. Please wait until it is marked as done."
+		showSnackbar(
+			"Cannot delete recipe while it is in use. Please wait until it is marked as done.",
+			"warning"
 		)
 		return
 	}
@@ -560,14 +1165,20 @@ const deleteRecipe = async () => {
 		await loadRecipes() // Refresh the list
 		showDeleteDialog.value = false
 		recipeToDelete.value = null
-		alert(`Recipe "${recipeName}" was deleted successfully!`)
+		showSnackbar(
+			`Recipe "${recipeName}" was deleted successfully!`,
+			"success"
+		)
 	} catch (error) {
 		console.error("Error deleting recipe:", error)
 		if (error.response) {
 			console.error("Error response data:", error.response.data)
-			alert("Failed to delete recipe: " + error.response.data.message)
+			showSnackbar(
+				error.response.data.message || "Failed to delete recipe",
+				"error"
+			)
 		} else {
-			alert("Failed to delete recipe. Please try again.")
+			showSnackbar("Failed to delete recipe. Please try again.", "error")
 		}
 	}
 }
@@ -576,17 +1187,127 @@ const closeDialog = () => {
 	showAddRecipeDialog.value = false
 	isEditing.value = false
 	editingRecipeId.value = null
-	newRecipe.value = { name: "", description: "", image: null }
+	newRecipe.value = {
+		id: null,
+		name: "",
+		description: "",
+		instructions: "",
+		prep_time_minutes: null,
+		cook_time_minutes: null,
+		serving_size: null,
+		difficulty: "easy",
+		is_vegetarian: false,
+		is_vegan: false,
+		is_gluten_free: false,
+		is_dairy_free: false,
+		is_nut_free: false,
+		image: null,
+		tags: [],
+		ingredients: [],
+		nutrition: {
+			calories: null,
+			protein: null,
+			carbs: null,
+			fat: null
+		}
+	}
 }
 
 const submitRecipe = async () => {
 	if (!isFormValid.value) return
 
+	formError.value = ""
 	isSubmitting.value = true
 	try {
 		const formData = new FormData()
 		formData.append("name", newRecipe.value.name)
 		formData.append("description", newRecipe.value.description)
+
+		// Add dietary flags
+		formData.append("is_vegan", newRecipe.value.is_vegan ? "1" : "0")
+		formData.append(
+			"is_vegetarian",
+			newRecipe.value.is_vegetarian ? "1" : "0"
+		)
+		formData.append(
+			"is_gluten_free",
+			newRecipe.value.is_gluten_free ? "1" : "0"
+		)
+		formData.append(
+			"is_dairy_free",
+			newRecipe.value.is_dairy_free ? "1" : "0"
+		)
+		formData.append("is_nut_free", newRecipe.value.is_nut_free ? "1" : "0")
+
+		// Add cooking details
+		if (newRecipe.value.prep_time_minutes) {
+			formData.append(
+				"prep_time_minutes",
+				newRecipe.value.prep_time_minutes
+			)
+		}
+		if (newRecipe.value.cook_time_minutes) {
+			formData.append(
+				"cook_time_minutes",
+				newRecipe.value.cook_time_minutes
+			)
+		}
+		if (newRecipe.value.difficulty) {
+			formData.append("difficulty", newRecipe.value.difficulty)
+		}
+
+		// Add tags
+		if (newRecipe.value.tags && newRecipe.value.tags.length > 0) {
+			newRecipe.value.tags.forEach((tag) => {
+				formData.append(
+					"tags[]",
+					typeof tag === "object" ? tag.id : tag
+				)
+			})
+		}
+
+		// Add ingredients
+		if (
+			newRecipe.value.ingredients &&
+			newRecipe.value.ingredients.length > 0
+		) {
+			newRecipe.value.ingredients.forEach((ingredient, index) => {
+				if (ingredient.id) {
+					formData.append(`ingredients[${index}][id]`, ingredient.id)
+					if (ingredient.quantity) {
+						formData.append(
+							`ingredients[${index}][quantity]`,
+							ingredient.quantity
+						)
+					}
+					if (ingredient.notes) {
+						formData.append(
+							`ingredients[${index}][notes]`,
+							ingredient.notes
+						)
+					}
+				}
+			})
+		}
+
+		// Add nutrition info
+		const nutrition = newRecipe.value.nutrition
+		if (nutrition) {
+			if (nutrition.calories)
+				formData.append("nutrition[calories]", nutrition.calories)
+			if (nutrition.protein)
+				formData.append("nutrition[protein]", nutrition.protein)
+			if (nutrition.carbs)
+				formData.append("nutrition[carbs]", nutrition.carbs)
+			if (nutrition.fat) formData.append("nutrition[fat]", nutrition.fat)
+			if (nutrition.fiber)
+				formData.append("nutrition[fiber]", nutrition.fiber)
+			if (nutrition.sugar)
+				formData.append("nutrition[sugar]", nutrition.sugar)
+			if (nutrition.notes)
+				formData.append("nutrition[notes]", nutrition.notes)
+		}
+
 		if (newRecipe.value.image) {
 			console.log("Appending file to FormData:", {
 				fileName: newRecipe.value.image.name,
@@ -608,17 +1329,24 @@ const submitRecipe = async () => {
 			}
 		}
 
-		if (isEditing.value && editingRecipeId.value) {
-			const response = await RecipeService.updateRecipe(
+		let response
+		if (editingRecipeId.value) {
+			// Update existing recipe
+			response = await RecipeService.updateRecipe(
 				editingRecipeId.value,
 				formData
 			)
-			console.log("Update response:", response)
-			alert(`Recipe "${newRecipe.value.name}" was updated successfully!`)
+			showSnackbar(
+				`Recipe "${newRecipe.value.name}" was updated successfully!`,
+				"success"
+			)
 		} else {
-			const response = await RecipeService.createRecipe(formData)
-			console.log("Create response:", response)
-			alert(`Recipe "${newRecipe.value.name}" was created successfully!`)
+			// Create new recipe
+			response = await RecipeService.createRecipe(formData)
+			showSnackbar(
+				`Recipe "${newRecipe.value.name}" was created successfully!`,
+				"success"
+			)
 		}
 		await loadRecipes()
 		closeDialog()
@@ -630,7 +1358,7 @@ const submitRecipe = async () => {
 			if (error.response.status === 422) {
 				const validationErrors = error.response.data.data
 				console.error("Validation errors:", validationErrors)
-				// Show detailed error message
+				// Show detailed error message in the form
 				let errorMessage = "Validation failed:\n"
 				if (typeof validationErrors === "object") {
 					for (const [field, messages] of Object.entries(
@@ -645,8 +1373,17 @@ const submitRecipe = async () => {
 				} else {
 					errorMessage += JSON.stringify(validationErrors, null, 2)
 				}
-				alert(errorMessage)
+				formError.value = errorMessage
+				showSnackbar(errorMessage, "error")
+			} else {
+				formError.value = `Error: ${
+					error.response.data.message || "Failed to save recipe"
+				}`
+				showSnackbar(formError.value, "error")
 			}
+		} else {
+			formError.value = "Failed to save recipe. Please try again."
+			showSnackbar(formError.value, "error")
 		}
 	} finally {
 		isSubmitting.value = false
@@ -659,9 +1396,10 @@ const checkoutRecipe = async (recipe: any) => {
 		const response = await RecipeService.checkoutRecipe(recipe.id)
 		console.log("Checkout response:", response)
 		await loadRecipes() // Refresh the list to show updated status
+		showSnackbar(`Recipe "${recipe.name}" saved for cooking!`, "success")
 	} catch (error) {
 		console.error("Error checking out recipe:", error)
-		alert("Failed to save recipe for cooking")
+		showSnackbar("Failed to save recipe for cooking", "error")
 	}
 }
 
@@ -671,15 +1409,27 @@ const returnRecipe = async (recipe: any) => {
 		const response = await RecipeService.returnRecipe(recipe.id)
 		console.log("Return response:", response)
 		await loadRecipes() // Refresh the list to show updated status
+		showSnackbar(`Recipe "${recipe.name}" marked as done!`, "success")
 	} catch (error) {
 		console.error("Error returning recipe:", error)
-		alert("Failed to mark recipe as done")
+		showSnackbar("Failed to mark recipe as done", "error")
+	}
+}
+
+const showSnackbar = (text, color = "success", timeout = 5000) => {
+	snackbar.value = {
+		show: true,
+		text,
+		color,
+		timeout
 	}
 }
 
 onMounted(() => {
 	console.log("Recipe component mounted")
 	loadRecipes()
+	loadTags()
+	loadIngredients()
 })
 </script>
 

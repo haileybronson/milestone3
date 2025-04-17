@@ -54,7 +54,10 @@
 										>
 											Forgot Password
 										</v-btn>
-										<v-btn class="ma-2 pa-2" @click="registerDialog = true">
+										<v-btn
+											class="ma-2 pa-2"
+											@click="registerDialog = true"
+										>
 											Register
 										</v-btn>
 									</v-col>
@@ -77,7 +80,10 @@
 						></v-text-field>
 					</v-card-text>
 					<v-card-actions>
-						<v-btn variant="text" @click="passwordResetDialog = false">
+						<v-btn
+							variant="text"
+							@click="passwordResetDialog = false"
+						>
 							Close
 						</v-btn>
 						<v-btn
@@ -157,6 +163,20 @@
 				</v-card>
 			</v-form>
 		</v-dialog>
+
+		<!-- Snackbar for notifications -->
+		<v-snackbar
+			v-model="snackbar.show"
+			:color="snackbar.color"
+			:timeout="snackbar.timeout"
+		>
+			{{ snackbar.text }}
+			<template v-slot:actions>
+				<v-btn variant="text" @click="snackbar.show = false"
+					>Close</v-btn
+				>
+			</template>
+		</v-snackbar>
 	</v-container>
 </template>
 <script src="./LoginView.ts" type="ts" />
