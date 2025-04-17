@@ -38,7 +38,13 @@ export default {
 				color: "info"
 			},
 			profilePictureImage: "",
-			emailOfVerification: ""
+			emailOfVerification: "",
+			snackbar: {
+				show: false,
+				text: "",
+				color: "success",
+				timeout: 5000
+			}
 		}
 	},
 
@@ -81,6 +87,14 @@ export default {
 		}
 	},
 	methods: {
+		showSnackbar(text, color = "success", timeout = 5000) {
+			this.snackbar = {
+				show: true,
+				text,
+				color,
+				timeout
+			}
+		},
 		onAvatarChange(e) {
 			var image = e.target.files || e.dataTransfer.files
 
@@ -97,7 +111,10 @@ export default {
 				})
 				.catch((error) => {
 					console.log(error)
-					alert("Error. Try again")
+					this.showSnackbar(
+						"Error updating avatar. Please try again.",
+						"error"
+					)
 					this.profileIsUploading = false
 				})
 		},
@@ -114,7 +131,10 @@ export default {
 				})
 				.catch((error) => {
 					console.log(error)
-					alert("Error. Try again")
+					this.showSnackbar(
+						"Error removing avatar. Please try again.",
+						"error"
+					)
 					this.profileIsUploading = false
 				})
 		},
@@ -149,9 +169,8 @@ export default {
 	<v-app :theme="theme">
 		<v-app-bar v-if="isAuthenticated">
 			<v-spacer></v-spacer>
-			<v-btn to="/" default> Home </v-btn>
-			<v-btn to="/recipes" default> Recipes </v-btn>
-			<v-btn to="/about" default> About </v-btn>
+			<v-btn to="/recipes" default class="mr-4"> Recipes </v-btn>
+			<v-spacer></v-spacer>
 
 			<v-menu min-width="200px" rounded>
 				<template v-slot:activator="{ props }">
@@ -247,5 +266,19 @@ export default {
 			</v-dialog>
 		</v-main>
 		<v-dialog v-model="showEmailNotVerifiedDialog" persistent></v-dialog>
+
+		<!-- Snackbar for notifications -->
+		<v-snackbar
+			v-model="snackbar.show"
+			:color="snackbar.color"
+			:timeout="snackbar.timeout"
+		>
+			{{ snackbar.text }}
+			<template v-slot:actions>
+				<v-btn variant="text" @click="snackbar.show = false"
+					>Close</v-btn
+				>
+			</template>
+		</v-snackbar>
 	</v-app>
 </template>

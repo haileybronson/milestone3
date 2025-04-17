@@ -16,20 +16,29 @@ export default {
 			isRegisterFormValid: false,
 			passwordResetFormIsValid: false,
 			registerFormIsLoading: false,
+			snackbar: {
+				show: false,
+				text: "",
+				color: "success",
+				timeout: 5000
+			},
 			forgotEmailRules: {
 				forgotEmail: [
 					(value) => !!value || "Required.",
-					(value) => (value && value.length >= 3) || "Min 3 characters"
+					(value) =>
+						(value && value.length >= 3) || "Min 3 characters"
 				]
 			},
 			loginRules: {
 				email: [
 					(value) => !!value || "Required.",
-					(value) => (value && value.length >= 3) || "Min 3 characters"
+					(value) =>
+						(value && value.length >= 3) || "Min 3 characters"
 				],
 				password: [
 					(value) => !!value || "Required.",
-					(value) => (value && value.length >= 8) || "Min 8 characters"
+					(value) =>
+						(value && value.length >= 8) || "Min 8 characters"
 				]
 			},
 			register: {
@@ -41,15 +50,18 @@ export default {
 			registerRules: {
 				email: [
 					(value) => !!value || "Required.",
-					(value) => (value && value.length >= 3) || "Min 3 characters"
+					(value) =>
+						(value && value.length >= 3) || "Min 3 characters"
 				],
 				name: [
 					(value) => !!value || "Required.",
-					(value) => (value && value.length >= 3) || "Min 3 characters"
+					(value) =>
+						(value && value.length >= 3) || "Min 3 characters"
 				],
 				password: [
 					(value) => !!value || "Required.",
-					(value) => (value && value.length >= 8) || "Min 8 characters"
+					(value) =>
+						(value && value.length >= 8) || "Min 8 characters"
 				],
 				c_password: [
 					(value) => !!value || "Type confirm password.",
@@ -62,6 +74,14 @@ export default {
 		}
 	},
 	methods: {
+		showSnackbar(text, color = "success", timeout = 5000) {
+			this.snackbar = {
+				show: true,
+				text,
+				color,
+				timeout
+			}
+		},
 		submitLogin() {
 			if (!this.isFormValid) {
 				return
@@ -93,11 +113,18 @@ export default {
 			this.submitForgotPasswordLoading = true
 			this.$store.dispatch("auth/forgotPassword", this.forgotEmail).then(
 				() => {
-					alert("Success!")
+					this.showSnackbar(
+						"Password reset email sent successfully!",
+						"success"
+					)
 					this.submitForgotPasswordLoading = false
 					this.passwordResetDialog = false
 				},
 				(error) => {
+					this.showSnackbar(
+						"Failed to send password reset email",
+						"error"
+					)
 					this.submitForgotPasswordLoading = false
 				}
 			)
@@ -117,13 +144,19 @@ export default {
 			this.registerFormIsLoading = true
 			this.$store.dispatch("auth/register", register).then(
 				() => {
-					alert("Success!")
+					this.showSnackbar(
+						"Registration successful! You can now log in.",
+						"success"
+					)
 					this.registerFormIsLoading = false
 					this.registerDialog = false
 				},
 				(error) => {
 					this.registerFormIsLoading = false
-					alert("Error!")
+					this.showSnackbar(
+						"Registration failed. Please try again.",
+						"error"
+					)
 				}
 			)
 		}
